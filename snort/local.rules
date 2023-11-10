@@ -1,28 +1,29 @@
 #DOS AND SCAN DETECTION
 block tcp $EXTERNAL_NET any -> $HOME_NET any (flags: S; msg:"Possible SYN DoS"; flow: stateless;  detection_filter: track by_dst, count 40, seconds 10; sid:10001;)
-#alert tcp $EXTERNAL_NET any -> $HOME_NET any (flags: A; msg:"Possible ACK DoS"; flow: stateless;  detection_filter: track by_dst, count 40, seconds 10; sid:10002;)
-#alert tcp $EXTERNAL_NET any -> $HOME_NET any (flags: R; msg:"Possible RST DoS"; flow: stateless;  detection_filter: track by_dst, count 40, seconds 10; sid:10003;)
-#alert tcp $EXTERNAL_NET any -> $HOME_NET any (flags: F; msg:"Possible FIN DoS"; flow: stateless;  detection_filter: track by_dst, count 40, seconds 10; sid:10004;)
-#alert udp $EXTERNAL_NET any -> $HOME_NET any (msg:"Possible UDP DoS"; flow: stateless;  detection_filter: track by_dst, count 40, seconds 10; sid:10005;)
-#alert icmp $EXTERNAL_NET any -> $HOME_NET any (msg:"Possible ICMP DoS";   detection_filter: track by_dst, count 250, seconds 10; sid:10006;)
+alert tcp $EXTERNAL_NET any -> $HOME_NET any (flags: A; msg:"Possible ACK DoS"; flow: stateless;  detection_filter: track by_dst, count 40, seconds 10; sid:10002;)
+alert tcp $EXTERNAL_NET any -> $HOME_NET any (flags: R; msg:"Possible RST DoS"; flow: stateless;  detection_filter: track by_dst, count 40, seconds 10; sid:10003;)
+alert tcp $EXTERNAL_NET any -> $HOME_NET any (flags: F; msg:"Possible FIN DoS"; flow: stateless;  detection_filter: track by_dst, count 40, seconds 10; sid:10004;)
+alert udp $EXTERNAL_NET any -> $HOME_NET any (msg:"Possible UDP DoS"; flow: stateless;  detection_filter: track by_dst, count 40, seconds 10; sid:10005;)
+alert icmp $EXTERNAL_NET any -> $HOME_NET any (msg:"Possible ICMP DoS";   detection_filter: track by_dst, count 250, seconds 10; sid:10006;)
 block tcp $EXTERNAL_NET any -> $HOME_NET any (flags: SRAFPU; msg:"Possible XMAS Scan"; flow: stateless;  detection_filter: track by_dst, count 40, seconds 10; sid:10007;)
 block tcp $EXTERNAL_NET any -> $HOME_NET any (flags: FPU; msg:"Possible XMAS NMap Scan"; flow: stateless;  detection_filter: track by_dst, count 40, seconds 10; sid:10008;)
 block tcp $EXTERNAL_NET any -> $HOME_NET any (flags: F; msg:"Possible FIN Scan"; flow: stateless;  detection_filter: track by_dst, count 40, seconds 10; sid:10009;)
 block tcp $EXTERNAL_NET any -> $HOME_NET any (flags: 0; msg:"Possible Null Scan"; flow: stateless;  detection_filter: track by_dst, count 40, seconds 10; sid:10010;)
 
 #Slowloris
-#reject tcp $EXTERNAL_NET any -> $HOME_NET any (msg:"Possible Slowloris DoS"; flow: to_server, established; pcre: !"/\x0D\x0A\x0D\x0A$/H/"; detection_filter: track by_dst, count 5, seconds 30; sid:10011;)
+#reject tcp $EXTERNAL_NET any -> $HOME_NET $HTTP_PORTS (msg:"Possible Slowloris DoS"; flow: to_server, established; pcre: !"/\x0D\x0A\x0D\x0A$/H/"; detection_filter: track by_dst, count 5, seconds 30; sid:10011;)
 
 #WEB CRAWILING
-block tcp $EXTERNAL_NET any -> $HOME_NET any (msg:"HTTP Traffic with Suspicious User-Agent - Possible crawling attempt (1)"; flow:to_server,established; http_header; content:"User-Agent|3A 20|", fast_pattern; pcre:"/(bot crawler|scanner|spider|wget|nikto|sqlmap|curl|libwww-perl)/i"; sid:100012;)
+block tcp $EXTERNAL_NET any -> $HOME_NET any (msg:"HTTP Traffic with Suspicious User-Agent - Possible crawling attempt"; flow:to_server,established; http_header; content:"User-Agent|3A 20|", fast_pattern; pcre:"/(bot crawler|scanner|spider|wget|nikto|sqlmap|curl|libwww-perl)/i"; sid:100012;)
+block tcp $EXTERNAL_NET any -> $HOME_NET $HTTP_PORTS (msg:"GET Request flood attempt"; flow:to_server,established; http_method; content:"GET", fast_pattern, nocase;  detection_filter: track by_dst, count 40, seconds 10; sid:100013;)
 
 #SQL Injection
-block tcp $EXTERNAL_NET any -> $HOME_NET any (msg:"SQL Injection Attempt: UNION Keyword"; flow:to_server,established; http_uri; content:"union", fast_pattern, nocase; sid:10013;)
-block tcp $EXTERNAL_NET any -> $HOME_NET any (msg:"SQL Injection Attempt: SELECT Keyword"; flow:to_server,established; http_uri; content:"select", fast_pattern, nocase; sid:10014;)
-block tcp $EXTERNAL_NET any -> $HOME_NET any (msg:"SQL Injection Attempt: ORDER Keyword"; flow:to_server,established; http_uri; content:"order", fast_pattern, nocase; sid:10015;)
-block tcp $EXTERNAL_NET any -> $HOME_NET any (msg:"SQL Injection Attempt: DROP Keyword"; flow:to_server,established; http_uri; content:"drop", fast_pattern, nocase; sid:10016;)
-block tcp $EXTERNAL_NET any -> $HOME_NET any (msg:"SQL Injection Attempt: OR Keyword"; flow:to_server,established; http_uri; content:"or", fast_pattern, nocase; sid:10017;)
-block tcp $EXTERNAL_NET any -> $HOME_NET any (msg:"SQL Injection Attempt: AND Keyword"; flow:to_server,established; http_uri; content:"and", fast_pattern, nocase; sid:10018;)
+block tcp $EXTERNAL_NET any -> $HOME_NET any (msg:"SQL Injection Attempt: UNION Keyword"; flow:to_server,established; http_uri; content:"union", fast_pattern, nocase; sid:10014;)
+block tcp $EXTERNAL_NET any -> $HOME_NET any (msg:"SQL Injection Attempt: SELECT Keyword"; flow:to_server,established; http_uri; content:"select", fast_pattern, nocase; sid:10015;)
+block tcp $EXTERNAL_NET any -> $HOME_NET any (msg:"SQL Injection Attempt: ORDER Keyword"; flow:to_server,established; http_uri; content:"order", fast_pattern, nocase; sid:10016;)
+block tcp $EXTERNAL_NET any -> $HOME_NET any (msg:"SQL Injection Attempt: DROP Keyword"; flow:to_server,established; http_uri; content:"drop", fast_pattern, nocase; sid:10017;)
+block tcp $EXTERNAL_NET any -> $HOME_NET any (msg:"SQL Injection Attempt: OR Keyword"; flow:to_server,established; http_uri; content:"or", fast_pattern, nocase; sid:10018;)
+block tcp $EXTERNAL_NET any -> $HOME_NET any (msg:"SQL Injection Attempt: AND Keyword"; flow:to_server,established; http_uri; content:"and", fast_pattern, nocase; sid:10019;)
 
 #SSH
-block tcp $EXTERNAL_NET any -> $HOME_NET 22 (flags:S; msg:"Possible SSH Brute Force Attempt"; flow:to_server; detection_filter: track by_src, count 5, seconds 30; sid:10019;)
+block tcp $EXTERNAL_NET any -> $HOME_NET 22 (flags:S; msg:"Possible SSH Brute Force Attempt"; flow:to_server; detection_filter: track by_src, count 5, seconds 30; sid:10020;)
