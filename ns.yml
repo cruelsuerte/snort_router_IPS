@@ -4,7 +4,7 @@ topology:
   defaults:
     kind: linux
   nodes:
-    router_ids:
+    snort:
       image: cruelsuerte/snort
       binds:
         - snort/local.rules:/usr/local/etc/rules/local.rules
@@ -13,7 +13,7 @@ topology:
         - ip addr add 2.2.2.1/24 dev eth1
         - ip addr add 3.3.3.1/24 dev eth2
         - sysctl -w net.ipv4.ip_forward=1
-        - iptables -A  INPUT ! -s 172.20.20.2 -j DROP
+        - iptables -A  INPUT ! -i eth0 -j DROP
         - iptables -I FORWARD -j NFQUEUE --queue-num=4 --queue-bypass
     kali:
       image: cruelsuerte/kali
@@ -22,7 +22,7 @@ topology:
         - ip addr add 2.2.2.2/24 dev eth1
         - ip route replace default via 2.2.2.1
         - iptables -I OUTPUT 1 -d 3.3.3.3 -p tcp --tcp-flags RST RST -j DROP
-    web_server:
+    server:
       image: tleemcjr/metasploitable2
       ports:
         - '80:80'
@@ -33,5 +33,5 @@ topology:
         - ip route replace default via 3.3.3.1
         - /bin/services.sh
   links:
-    - endpoints: ["router_ids:eth1", "kali:eth1"]
-    - endpoints: ["router_ids:eth2", "web_server:eth1"]
+    - endpoints: ["snort:eth1", "kali:eth1"]
+    - endpoints: ["snort:eth2", "server:eth1"]
